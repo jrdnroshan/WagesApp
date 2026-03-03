@@ -1,4 +1,6 @@
-﻿namespace WagesApp;
+﻿using System.Collections.Generic;
+
+namespace WagesApp;
 
 public class Program
 {
@@ -7,6 +9,12 @@ public class Program
     public const decimal PAYRATE = 22.0m;
     public static readonly IReadOnlyCollection<decimal> TAXRATES = new List<decimal> { 0.075m, 0.08m }.AsReadOnly();
     public static readonly int BONUS = 5, BONUSCONDITION = 30;
+    public static string payslips = "";
+    public static string topEmployee = "";
+    public static int employeeCounter = 0, topHoursWorked = -1;
+    public static decimal totalWages = 0.0m;
+    static readonly int[] IDMINMAX = {0, 5000};
+    static readonly int[] HOURSMINMAX = { 0, 24 };
 
 
 
@@ -20,13 +28,181 @@ public class Program
 
         //Repeat until all OneEmployee() pay slips have been generated
 
+        char continueInput = 'y';
+        while(continueInput == 'y' || continueInput.Equals('y'))
+        {
+            Console.WriteLine(OneEmployee()); 
+
+            Console.WriteLine("\n\n Do you want to process another employee? (y/n)");
+            continueInput = Console.ReadLine()[0];
+        }
+        Console.WriteLine(payslips);
+
+        Console.WriteLine("\n\n----------Payroll Summary----------");
+        Console.WriteLine($"Total Employees Processed: {employeeCounter}");
+        Console.WriteLine($"Total Wages Paid: {totalWages:C}");
+        Console.WriteLine($"Top Employee: {topEmployee} with {topHoursWorked} hours worked");
+        Console.WriteLine("---------------------------------------");
     }
     //colloect employee data and generate payslip
-    public static void OneEmployee()
-    {
+    public static string OneEmployee()
 
+    {
+        //declare local variables
+        int id;
+        string name, lastName;
+        List<int> hoursWorked = new List<int>();
+        List<string> DAYSOFWEEK = new List<string> { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+        DAYSOFWEEK.AsReadOnly();
+        List<string> QUESTIONS = new List<string> { "Enter Employee ID:", "Enter the Employee's firstname", "Enter the Employee's last name" };
+        
+
+        //Capture employee data
+
+        //recieve employee id
+        
+        id = CheckInt(QUESTIONS[0], IDMINMAX[0], IDMINMAX[1]);
+
+        //recieve employee name
+       
+        name = CheckName(QUESTIONS[1]);
+
+        //recieve employee last name
+        
+        lastName = CheckName(QUESTIONS[2]);
+
+        //recieve hours worked (for each day of the week)
+        foreach(string day in DAYSOFWEEK)
+        {
+            
+            hoursWorked.Add(CheckInt($"Enter hours worked on {day}:", HOURSMINMAX[0], HOURSMINMAX[1]));
+        }
+
+        payslips += GeneratePaySlip(id, name, lastName, hoursWorked);
+
+        //increase employee counter -> employeeCounter = employeeCounter + 1
+        employeeCounter++;
+
+        //add gross wages earned to total wages
+        totalWages += CalculateWeeklyPay(hoursWorked) + CalculateBonus(hoursWorked);
+
+        //check if hours worked is greater than current top hous worked if so update top employee and top hours
+        if(hoursWorked.Sum() > topHoursWorked)
+        {
+            topEmployee = $"{name}  {lastName}";
+            topHoursWorked = hoursWorked.Sum();
+
+        }
+
+
+
+
+        return "Employee processed";
+         
+
+
+        
+
+        
+
+    
+        
+    }
+    //Calculate Weekly pay
+    static decimal CalculateWeeklyPay(List<int> hoursWorked)
+    {
+        decimal weeklyPay = 0.0m;
+        int totalHours = hoursWorked.Sum();
+        weeklyPay = totalHours * PAYRATE;
+
+
+        return weeklyPay;
+    }
+    //Calculate Bonus
+    static decimal CalculateBonus(List<int> hoursWorked)
+    {
+        
+
+        if(hoursWorked.Sum()>= BONUSCONDITION)
+        {
+            return BONUS * PAYRATE;
+        }
+
+        return 0;
+    }
+    //Calculate Tax
+    static decimal CalculateTax(List<int> hoursWorked)
+    {
+        decimal tax = 0;
+
+        //calculate total wages (including bonus)
+        if(CalculateWeeklyPay(hoursWorked) + CalculateBonus(hoursWorked) < 450)
+        {
+            tax = (CalculateWeeklyPay(hoursWorked) + CalculateBonus(hoursWorked)) * TAXRATES.ElementAt(0);
+
+        }
+        else
+        {
+            tax = (CalculateWeeklyPay(hoursWorked) + CalculateBonus(hoursWorked)) * TAXRATES.ElementAt(1);
+        }
+            return tax;
+    }
+    // Generate Payslip
+    private static string GeneratePaySlip(int id, string name, string surname, List<int> hoursWorked)
+    {
+        string paySlip = "";
+
+        paySlip += "----------Payslip----------\n";
+
+        paySlip += $"Employee ID: {id}\n";
+        paySlip += $"Employee Name: {name} {surname}\n";
+        paySlip += $"Hours Worked: {hoursWorked.Sum()}\n";
+        paySlip += $"Gross Income: {CalculateWeeklyPay(hoursWorked) + CalculateBonus(hoursWorked):C}\n";
+        paySlip += $"Tax:{CalculateTax(hoursWorked):C}\n";
+        paySlip += $"Net Income: {CalculateWeeklyPay(hoursWorked) + CalculateBonus(hoursWorked) - CalculateTax(hoursWorked):C}\n";
+
+        paySlip += "---------------------------\n\n";
+
+
+
+        return paySlip;
     }
 
+    // check if a name is lowercase and cinvert to title case if necessary
+    static string CheckName(string question)
+    {
+        // ask user for name input
+        Console.WriteLine(question);
+
+        string nameInput = Console.ReadLine();
+
+        nameInput = nameInput[0].ToString().ToUpper() + nameInput.Substring(1);
+
+        return nameInput;
+
+    
+    }
+
+    //check if user input is a number between a min and max value
+    static int CheckInt(string question, int min, int max)
+    {
+        while (true)
+        {
+            Console.WriteLine(question);
+            int userInput = Convert.ToInt32(Console.ReadLine());
+
+            //check if user input is between minand max value
+            if(userInput>= min && userInput <= max)
+            {
+                return userInput;
+            }
+            else
+            {
+                Console.WriteLine($"Please enter a number between {min} and {max}");
+            }
+
+        }
+    }
 
 }
 
