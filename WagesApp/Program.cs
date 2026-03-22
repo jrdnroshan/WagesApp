@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace WagesApp;
 
@@ -26,15 +27,30 @@ public class Program
         //Display App title screen
         Console.WriteLine("  _      __                    ___           \n | | /| / /__ ____ ____ ___   / _ | ___  ___ \n | |/ |/ / _ `/ _ `/ -_|_-<  / __ |/ _ \\/ _ \\\n |__/|__/\\_,_/\\_, /\\__/___/ /_/ |_/ .__/ .__/\n             /___/               /_/  /_/    ");
 
+        Console.WriteLine("\n\nThis program helps the landscaping team manager quickly and accurately calculate each part‑time worker’s weekly pay. \nThe app takes the worker’s name and hours worked, applies the company’s pay rules, and automatically works out \nbonus hours, gross pay, tax, and final net pay. A clear payslip is then displayed, with an optional summary of\nall workers processed.");
+
+
+        Console.WriteLine("\n\n Press Enter To Continue...");
+        Console.ReadLine();
+
+        Console.Clear();
+
         //Repeat until all OneEmployee() pay slips have been generated
 
         char continueInput = 'y';
         while(continueInput == 'y' || continueInput.Equals('y'))
         {
-            Console.WriteLine(OneEmployee()); 
+            Console.WriteLine(OneEmployee());
 
-            Console.WriteLine("\n\n Do you want to process another employee? (y/n)");
-            continueInput = Console.ReadLine()[0];
+            Console.WriteLine("Press Enter to Continue...");
+            Console.ReadLine();
+
+            Console.Clear();
+
+           
+            continueInput = CheckContinueInput("\n\n Do you want to process another employee? (y/n)");
+
+            Console.Clear();
         }
         Console.WriteLine(payslips);
 
@@ -55,6 +71,8 @@ public class Program
         List<string> DAYSOFWEEK = new List<string> { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
         DAYSOFWEEK.AsReadOnly();
         List<string> QUESTIONS = new List<string> { "Enter Employee ID:", "Enter the Employee's firstname", "Enter the Employee's last name" };
+
+        Console.WriteLine("---------- Add Employee ----------");
         
 
         //Capture employee data
@@ -97,7 +115,7 @@ public class Program
 
 
 
-        return "Employee processed";
+        return "\n\nEmployee processed";
          
 
 
@@ -171,16 +189,31 @@ public class Program
     // check if a name is lowercase and cinvert to title case if necessary
     static string CheckName(string question)
     {
-        // ask user for name input
-        Console.WriteLine(question);
 
-        string nameInput = Console.ReadLine();
+        while (true)
+        {
+            // ask user for name input
+            Console.WriteLine(question);
 
-        nameInput = nameInput[0].ToString().ToUpper() + nameInput.Substring(1);
+            string nameInput = Console.ReadLine();
+            // check if name input is alphabetic charecters and '-' only
+            if (Regex.IsMatch(nameInput, @"^[A-Za-z-]+$"))
+            {
+                nameInput = nameInput[0].ToString().ToUpper() + nameInput.Substring(1);
 
-        return nameInput;
+                return nameInput;
+            }
+            else
+            {
+                Console.WriteLine("Error: Names can only contain alphabetic characters and '-' ");
+            }
 
-    
+           
+
+
+        }
+
+
     }
 
     //check if user input is a number between a min and max value
@@ -188,20 +221,56 @@ public class Program
     {
         while (true)
         {
-            Console.WriteLine(question);
-            int userInput = Convert.ToInt32(Console.ReadLine());
 
-            //check if user input is between minand max value
-            if(userInput>= min && userInput <= max)
+            try
             {
-                return userInput;
+                Console.WriteLine(question);
+                int userInput = Convert.ToInt32(Console.ReadLine());
+
+                //check if user input is between minand max value
+                if (userInput >= min && userInput <= max)
+                {
+                    return userInput;
+                }
+                else
+                {
+                    Console.WriteLine($"Please enter a number between {min} and {max}");
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Error: You must enter an number between {min} and {max}.");
+                Console.ForegroundColor = ConsoleColor.Black;
+
+            }
+
+
+        }
+    }
+
+    static char CheckContinueInput(string question)
+    {
+        while (true)
+        {
+            string userInput;
+            Console.WriteLine(question);
+            userInput = Console.ReadLine();
+
+            //check if userInput is not empty and is either 'y' or 'n'
+            if (!string.IsNullOrEmpty(userInput) && Regex.IsMatch(userInput, "^[yYnN]$"))
+            {
+                return userInput.ToLower()[0];
             }
             else
             {
-                Console.WriteLine($"Please enter a number between {min} and {max}");
+                Console.WriteLine("Error: Only 'y' or 'n' is accepted");
             }
 
         }
+        
     }
 
 }
